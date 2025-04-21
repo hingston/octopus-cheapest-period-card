@@ -24,7 +24,7 @@ In the Home Assistant UI:
 1.  Go to HACS.
 2.  Click on `Frontend`.
 3.  Click the three dots in the top right corner and select `Custom repositories`.
-4.  Enter the repository URL: `your_username/octopus-cheapest-period-card` (replace `your_username` with your GitHub username).
+4.  Enter the repository URL: `hingston/octopus-cheapest-period-card`.
 5.  Select the category "Lovelace" and click the `Add` button.
 6.  Close the custom repositories dialog.
 7.  Go to `Explore & Download Repositories` and search for "octopus cheapest". You should find "Octopus Cheapest Period Card".
