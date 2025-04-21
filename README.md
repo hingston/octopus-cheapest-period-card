@@ -20,6 +20,10 @@ This is particularly useful for planning when to run appliances like dishwashers
 ##### HACS
 The easiest way to install it is via [HACS (Home Assistant Community Store)](https://github.com/hacs/frontend).
 
+Simply click this button to go directly to the details page:
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=hingston&repository=octopus-cheapest-period-card&category=plugin)
+
 In the Home Assistant UI:
 1.  Go to HACS.
 2.  Click on `Frontend`.
