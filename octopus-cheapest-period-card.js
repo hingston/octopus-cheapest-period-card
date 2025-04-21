@@ -152,8 +152,12 @@ class OctopusCheapestPeriodCard extends HTMLElement {
 
             // Format time and date using user's locale
             const lang = navigator.language || navigator.languages[0];
-            const timeOptions = { hour: '2-digit', minute: '2-digit', hourCycle: config.hour12 === false ? 'h23' : 'h12' };
-            const dateOptions = { weekday: 'short', month: 'short', day: 'numeric' };
+            const timeOptions = {
+                hour: '2-digit',
+                minute: '2-digit',
+                hourCycle: config.hour12 === false ? 'h23' : 'h12'
+            };
+            const dateOptions = {weekday: 'short', month: 'short', day: 'numeric'};
 
 
             const startTimeFormatted = start.toLocaleTimeString(lang, timeOptions);
