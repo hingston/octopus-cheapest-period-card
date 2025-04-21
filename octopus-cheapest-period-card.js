@@ -12,6 +12,7 @@ class OctopusCheapestPeriodCard extends HTMLElement {
             style.textContent = `
                 .cheapest-period-info {
                     font-size: 1.1em;
+                    line-height: 1.5; /* Improve readability */
                 }
                 .highlight {
                     font-weight: bold;
@@ -21,6 +22,9 @@ class OctopusCheapestPeriodCard extends HTMLElement {
                 .price-high { color: red; }
                 .price-negative { color: blue; }
                  .no-period { color: orange; } /* Style for the no period message */
+                 .period-details {
+                     margin-top: 8px; /* Add some space above the details */
+                 }
             `;
             card.appendChild(style);
             card.appendChild(this.content);
@@ -88,7 +92,7 @@ class OctopusCheapestPeriodCard extends HTMLElement {
                 finalMessage = finalMessage.replace('{{ unitstr }}', unitstr);
             } else {
                 // Remove the optional part if maxPrice is not defined
-                finalMessage = finalMessage.replace('{{ maxPrice !== undefined ? \' below {{ maxPrice }}{{ unitstr }}\' : \'\' }}', '');
+                finalMessage = finalMessage.replace(/\{\{ maxPrice !== undefined \? '.*?\{\{ maxPrice \}\}.*?\{\{ unitstr \}\}.*?' : '' \}\}/, '');
             }
 
             this.content.innerHTML = `<p class="no-period">${finalMessage} (Insufficient data: ${allRates.length * 0.5} hours available)</p>`;
@@ -182,10 +186,11 @@ class OctopusCheapestPeriodCard extends HTMLElement {
             htmlContent = `
                 <div class="cheapest-period-info ${priceColorClass}">
                     <p><span class="highlight">Cheapest ${durationHours} hour period:</span></p>
-                    <p><strong>Start:</strong> ${startDateFormatted}, ${startTimeFormatted}</p>
-                    <p><strong>End:</strong> ${endDateFormatted}${endTimeFormatted}</p>
-                    <p><strong>Average Price:</strong> ${bestPeriod.averagePrice.toFixed(roundUnits)}${unitstr}</p>
-                    <p>To start your appliance, run it from <span class="highlight">${startTimeFormatted} on ${startDateFormatted}</span>.</p>
+                    <div class="period-details">
+                        <span>Start: ${startDateFormatted}, ${startTimeFormatted}</span><br>
+                        <span>End: ${endDateFormatted}${endTimeFormatted}</span><br>
+                        <span>Average Price: ${bestPeriod.averagePrice.toFixed(roundUnits)}${unitstr}</span>
+                    </div>
                 </div>
             `;
 
@@ -239,7 +244,7 @@ class OctopusCheapestPeriodCard extends HTMLElement {
     // distribute all cards over the available columns.
     getCardSize() {
         // Estimate card size based on content lines
-        return 4;
+        return 3; // Reduced slightly due to more compact display
     }
 }
 
