@@ -12,7 +12,7 @@ class OctopusCheapestPeriodCard extends HTMLElement {
             style.textContent = `
                 .cheapest-period-info {
                     font-size: 1.1em;
-                    line-height: 1.5; /* Improve readability */
+                    line-height: 1.5;
                 }
                 .highlight {
                     font-weight: bold;
@@ -21,9 +21,13 @@ class OctopusCheapestPeriodCard extends HTMLElement {
                 .price-medium { color: orange; }
                 .price-high { color: red; }
                 .price-negative { color: blue; }
-                 .no-period { color: orange; } /* Style for the no period message */
+                 .no-period { color: orange; }
                  .period-details {
-                     margin-top: 8px; /* Add some space above the details */
+                     margin-top: 8px;
+                 }
+                 .time-until {
+                     font-style: italic;
+                     color: #555;
                  }
             `;
             card.appendChild(style);
@@ -31,15 +35,12 @@ class OctopusCheapestPeriodCard extends HTMLElement {
             this.appendChild(card);
         }
 
-        // Initialise the lastRefreshTimestamp
         if (!this.lastRefreshTimestamp) {
-            // Store the timestamp of the last refresh
             this.lastRefreshTimestamp = 0;
         }
 
-        // Check if the interval has passed
         const currentTime = Date.now();
-        const cardRefreshIntervalSecondsInMilliseconds = (config.cardRefreshIntervalSeconds || 60) * 1000; // Default to 60 seconds
+        const cardRefreshIntervalSecondsInMilliseconds = (config.cardRefreshIntervalSeconds || 60) * 1000;
         if (!(currentTime - this.lastRefreshTimestamp >= cardRefreshIntervalSecondsInMilliseconds)) {
             return;
         }
@@ -56,7 +57,6 @@ class OctopusCheapestPeriodCard extends HTMLElement {
         let noPeriodMessageTemplate = config.noPeriodMessage || `No suitable {{ durationHours }} hour period found{{ maxPrice !== undefined ? ' below {{ maxPrice }}{{ unitstr }}' : '' }}.`;
 
 
-        // Basic validation for durationHours
         if (isNaN(durationHours) || durationHours <= 0 || durationHours % 0.5 !== 0) {
             this.content.innerHTML = `<div style="color: red;">Invalid durationHours configured. Must be a positive multiple of 0.5.</div>`;
             return;
@@ -68,7 +68,6 @@ class OctopusCheapestPeriodCard extends HTMLElement {
         let allRates = [];
 
         if (currentRatesState && currentRatesState.attributes && currentRatesState.attributes.rates) {
-            // Filter out past rates from current day if any exist and are before now
             const now = new Date();
             const currentRates = currentRatesState.attributes.rates.filter(rate => new Date(rate.end) > now);
             allRates = allRates.concat(currentRates);
@@ -78,20 +77,16 @@ class OctopusCheapestPeriodCard extends HTMLElement {
             allRates = allRates.concat(futureRatesState.attributes.rates);
         }
 
-        // Ensure rates are sorted by start time
         allRates.sort((a, b) => new Date(a.start) - new Date(b.start));
 
-        const numSlots = durationHours / 0.5; // Number of 30-minute slots
+        const numSlots = durationHours / 0.5;
 
-        // Check if enough data is available for the requested duration
         if (allRates.length < numSlots) {
-            // Render the dynamic message even if not enough data
             let finalMessage = noPeriodMessageTemplate.replace('{{ durationHours }}', durationHours);
             if (maxPrice !== undefined) {
                 finalMessage = finalMessage.replace('{{ maxPrice }}', maxPrice.toFixed(roundUnits));
                 finalMessage = finalMessage.replace('{{ unitstr }}', unitstr);
             } else {
-                // Remove the optional part if maxPrice is not defined
                 finalMessage = finalMessage.replace(/\{\{ maxPrice !== undefined \? '.*?\{\{ maxPrice \}\}.*?\{\{ unitstr \}\}.*?' : '' \}\}/, '');
             }
 
@@ -103,38 +98,33 @@ class OctopusCheapestPeriodCard extends HTMLElement {
         let minAveragePrice = Infinity;
         let bestPeriod = null;
 
-        // Iterate through possible start times
         for (let i = 0; i <= allRates.length - numSlots; i++) {
             const potentialStartRate = allRates[i];
             const potentialEndRate = allRates[i + numSlots - 1];
             const now = new Date();
 
-            // Only consider periods that are entirely in the future or start now/in the future
             if (new Date(potentialEndRate.end) < now) {
-                continue; // Skip if the entire period is in the past
+                continue;
             }
 
 
             let sumOfPrices = 0;
             for (let j = 0; j < numSlots; j++) {
-                // Ensure we don't go out of bounds, although the loop condition should prevent this
                 if (i + j < allRates.length) {
                     sumOfPrices += allRates[i + j].value_inc_vat;
                 } else {
                     console.warn("Octopus Cheapest Period Card: Attempted to access rate out of bounds during calculation.");
-                    continue; // Should not happen with correct loop bounds
+                    continue;
                 }
             }
 
             const averagePrice = sumOfPrices / numSlots;
             const averagePriceMultiplied = averagePrice * multiplier;
 
-            // Check against maxPrice if it's set
             if (maxPrice !== undefined && averagePriceMultiplied > maxPrice) {
-                continue; // Skip this period if its average price is above the max price
+                continue;
             }
 
-            // Check if this is the cheapest valid period found so far
             if (averagePrice < minAveragePrice) {
                 minAveragePrice = averagePrice;
                 bestPeriod = {
@@ -148,9 +138,30 @@ class OctopusCheapestPeriodCard extends HTMLElement {
         let htmlContent = '';
         if (bestPeriod) {
             const start = new Date(bestPeriod.start);
-            const end = new Date(bestPeriod.end); // End time of the period
+            const end = new Date(bestPeriod.end);
+            const now = new Date();
 
-            // Format time and date using user's locale
+            const timeUntilStartMs = start.getTime() - now.getTime();
+
+            let timeUntilString = '';
+            if (timeUntilStartMs <= 60000) {
+                timeUntilString = 'Now';
+            } else if (timeUntilStartMs > 0) {
+                const totalMinutes = Math.floor(timeUntilStartMs / (1000 * 60));
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+
+                if (hours > 0) {
+                    timeUntilString += `${hours} hour${hours > 1 ? 's' : ''}`;
+                    if (minutes > 0) {
+                        timeUntilString += ` ${minutes} minute${minutes > 1 ? 's' : ''}`;
+                    }
+                } else {
+                    timeUntilString += `${minutes} minute${minutes > 1 ? 's' : ''}`;
+                }
+                timeUntilString = `Starts in: ${timeUntilString}`;
+            }
+
             const lang = navigator.language || navigator.languages[0];
             const timeOptions = {
                 hour: '2-digit',
@@ -163,11 +174,9 @@ class OctopusCheapestPeriodCard extends HTMLElement {
             const startTimeFormatted = start.toLocaleTimeString(lang, timeOptions);
             const endTimeFormatted = end.toLocaleTimeString(lang, timeOptions);
             const startDateFormatted = start.toLocaleDateString(lang, dateOptions);
-            // Only show end date if it's different from the start date
             const endDateFormatted = start.toDateString() === end.toDateString() ? '' : end.toLocaleDateString(lang, dateOptions) + ', ';
 
 
-            // Determine color based on average price (using original card's logic roughly)
             let priceColorClass = '';
             const lowlimit = config.lowlimit !== undefined ? parseFloat(config.lowlimit) * multiplier : undefined;
             const mediumlimit = config.mediumlimit !== undefined ? parseFloat(config.mediumlimit) * multiplier : undefined;
@@ -175,16 +184,18 @@ class OctopusCheapestPeriodCard extends HTMLElement {
 
 
             if (bestPeriod.averagePrice <= 0) {
-                priceColorClass = 'price-negative'; // Blue for negative
+                priceColorClass = 'price-negative';
             } else if (highlimit !== undefined && bestPeriod.averagePrice > highlimit) {
-                priceColorClass = 'price-high'; // Red
+                priceColorClass = 'price-high';
             } else if (mediumlimit !== undefined && bestPeriod.averagePrice > mediumlimit) {
-                priceColorClass = 'price-medium'; // Orange
+                priceColorClass = 'price-medium';
             } else if (lowlimit !== undefined && bestPeriod.averagePrice > lowlimit) {
-                priceColorClass = 'price-low'; // Dark Green (as per original card's dark green logic)
+                priceColorClass = 'price-low';
             } else {
-                priceColorClass = 'price-low'; // Green (below low limit)
+                priceColorClass = 'price-low';
             }
+
+            const timeUntilLine = timeUntilString ? `<span class="time-until">${timeUntilString}</span><br>` : '';
 
 
             htmlContent = `
@@ -193,19 +204,18 @@ class OctopusCheapestPeriodCard extends HTMLElement {
                     <div class="period-details">
                         <span>Start: ${startDateFormatted}, ${startTimeFormatted}</span><br>
                         <span>End: ${endDateFormatted}${endTimeFormatted}</span><br>
+                        ${timeUntilLine}
                         <span>Average Price: ${bestPeriod.averagePrice.toFixed(roundUnits)}${unitstr}</span>
                     </div>
                 </div>
             `;
 
         } else {
-            // If no period found (due to maxPrice filter or no valid future periods)
             let finalMessage = noPeriodMessageTemplate.replace('{{ durationHours }}', durationHours);
             if (maxPrice !== undefined) {
                 finalMessage = finalMessage.replace('{{ maxPrice }}', maxPrice.toFixed(roundUnits));
                 finalMessage = finalMessage.replace('{{ unitstr }}', unitstr);
             } else {
-                // Remove the optional part if maxPrice is not defined
                 finalMessage = finalMessage.replace(/\{\{ maxPrice !== undefined \? '.*?\{\{ maxPrice \}\}.*?\{\{ unitstr \}\}.*?' : '' \}\}/, '');
             }
 
@@ -223,19 +233,18 @@ class OctopusCheapestPeriodCard extends HTMLElement {
             throw new Error('You need to define durationHours');
         }
 
-        // Combine default configuration with user configuration
         const defaultConfig = {
             title: 'Cheapest Period',
             unitstr: 'p/kWh',
             multiplier: 100,
             roundUnits: 2,
-            hour12: false, // Default to 24 hour format
-            lowlimit: 5, // Used for coloring the result (in configured unitstr)
-            mediumlimit: 20, // Used for coloring the result (in configured unitstr)
-            highlimit: 30, // Used for coloring the result (in configured unitstr)
-            maxPrice: undefined, // Optional: Maximum acceptable average price (in configured unitstr)
-            noPeriodMessage: "No suitable {{ durationHours }} hour period found{{ maxPrice !== undefined ? ' below {{ maxPrice }}{{ unitstr }}' : '' }}.", // Message if no period found. Placeholders supported.
-            cardRefreshIntervalSeconds: 60 // How often the card should refresh
+            hour12: false,
+            lowlimit: 5,
+            mediumlimit: 20,
+            highlimit: 30,
+            maxPrice: undefined,
+            noPeriodMessage: "No suitable {{ durationHours }} hour period found{{ maxPrice !== undefined ? ' below {{ maxPrice }}{{ unitstr }}' : '' }}.",
+            cardRefreshIntervalSeconds: 60
         };
 
         this._config = {
@@ -244,21 +253,17 @@ class OctopusCheapestPeriodCard extends HTMLElement {
         };
     }
 
-    // The height of your card. Home Assistant uses this to automatically
-    // distribute all cards over the available columns.
     getCardSize() {
-        // Estimate card size based on content lines
-        return 3; // Reduced slightly due to more compact display
+        return 4;
     }
 }
 
 customElements.define('octopus-cheapest-period-card', OctopusCheapestPeriodCard);
 
-// Configure the preview in the Lovelace card picker
 window.customCards = window.customCards || [];
 window.customCards.push({
     type: 'octopus-cheapest-period-card',
     name: 'Octopus Cheapest Period Card',
-    preview: false, // Set to true if you want a preview in the picker
+    preview: false,
     description: 'Finds the cheapest upcoming period of a specified duration for Octopus Energy rates.',
 });
