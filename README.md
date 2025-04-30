@@ -2,7 +2,7 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 
-This lovelace card calculates and displays the cheapest upcoming period of a user-defined duration based on the electricity rates provided by the [BottlecapDave/HomeAssistant-OctopusEnergy](https://github.com/BottlecapDave/) integration.
+This lovelace card calculates and displays the cheapest upcoming period of a user-defined duration based on the electricity rates provided by the [BottlecapDave/HomeAssistant-OctopusEnergy](https://github.com/BottlecapDave/) integration. It also shows how long until that cheapest period begins.
 
 This is particularly useful for planning when to run appliances like dishwashers, washing machines, or charge electric vehicles to minimize costs on tariffs like Octopus Agile.
 
@@ -10,6 +10,7 @@ This is particularly useful for planning when to run appliances like dishwashers
 
 *   Finds the cheapest period of a specified duration (in hours, in 30-minute increments).
 *   Calculates and displays the average price over the cheapest period.
+*   **Displays the time remaining until the start of the cheapest period (e.g., "Starts in X hours Y minutes" or "Now").**
 *   Optionally allows setting a maximum acceptable price per kWh; if no period is found below this price, a message is displayed.
 *   Indicates the exact start time to begin your appliance usage.
 *   Supports configuring units (e.g., p/kWh or GBP/kWh) and multipliers.
